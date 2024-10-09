@@ -51,7 +51,7 @@ var DefaultConfig = Config{
 	GasPrice:      big.NewInt(0.25 * params.Shannon),
 
 	TxPool:    core.DefaultTxPoolConfig,
-	RPCGasCap: 25000000,
+	RPCGasCap: 150000000,
 	GPO: gasprice.Config{
 		Blocks:     20,
 		Percentile: 60,
