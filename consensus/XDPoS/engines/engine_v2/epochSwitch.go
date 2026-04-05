@@ -30,9 +30,8 @@ func (x *XDPoS_v2) getPreviousEpochSwitchInfoByHash(chain consensus.ChainReader,
 // Given header and its hash, get epoch switch info from the epoch switch block of that epoch,
 // header is allow to be nil.
 func (x *XDPoS_v2) getEpochSwitchInfo(chain consensus.ChainReader, header *types.Header, hash common.Hash) (*types.EpochSwitchInfo, error) {
-	e, ok := x.epochSwitches.Get(hash)
-	if ok {
-		epochSwitchInfo := e.(*types.EpochSwitchInfo)
+	epochSwitchInfo, ok := x.epochSwitches.Get(hash)
+	if ok && epochSwitchInfo != nil {
 		log.Debug("[getEpochSwitchInfo] cache hit", "number", epochSwitchInfo.EpochSwitchBlockInfo.Number, "hash", hash.Hex())
 		return epochSwitchInfo, nil
 	}
@@ -41,7 +40,6 @@ func (x *XDPoS_v2) getEpochSwitchInfo(chain consensus.ChainReader, header *types
 		log.Debug("[getEpochSwitchInfo] header doesn't provide, get header by hash", "hash", hash.Hex())
 		h = chain.GetHeaderByHash(hash)
 		if h == nil {
-			log.Warn("[getEpochSwitchInfo] can not find header from db", "hash", hash.Hex())
 			return nil, fmt.Errorf("[getEpochSwitchInfo] can not find header from db hash %v", hash.Hex())
 		}
 	}
@@ -51,12 +49,31 @@ func (x *XDPoS_v2) getEpochSwitchInfo(chain consensus.ChainReader, header *types
 	}
 	if isEpochSwitch {
 		log.Debug("[getEpochSwitchInfo] header is epoch switch", "hash", hash.Hex(), "number", h.Number.Uint64())
+		if h.Number.Uint64() == 0 {
+			log.Warn("[getEpochSwitchInfo] block 0, init epoch differently")
+			// handle genesis block differently as follows
+			masternodes := common.ExtractAddressFromBytes(h.Extra[32 : len(h.Extra)-65])
+			penalties := []common.Address{}
+			standbynodes := []common.Address{}
+			epochSwitchInfo := &types.EpochSwitchInfo{
+				Penalties:      penalties,
+				Standbynodes:   standbynodes,
+				Masternodes:    masternodes,
+				MasternodesLen: len(masternodes),
+				EpochSwitchBlockInfo: &types.BlockInfo{
+					Hash:   hash,
+					Number: h.Number,
+					Round:  0,
+				},
+			}
+			x.epochSwitches.Add(hash, epochSwitchInfo)
+			return epochSwitchInfo, nil
+		}
 		quorumCert, round, masternodes, err := x.getExtraFields(h)
 		if err != nil {
 			log.Error("[getEpochSwitchInfo] get extra field", "err", err, "number", h.Number.Uint64())
 			return nil, err
 		}
-
 		snap, err := x.getSnapshot(chain, h.Number.Uint64(), false)
 		if err != nil {
 			log.Error("[getEpochSwitchInfo] Adaptor v2 getSnapshot has error", "err", err)
@@ -89,7 +106,7 @@ func (x *XDPoS_v2) getEpochSwitchInfo(chain consensus.ChainReader, header *types
 		x.epochSwitches.Add(hash, epochSwitchInfo)
 		return epochSwitchInfo, nil
 	}
-	epochSwitchInfo, err := x.getEpochSwitchInfo(chain, nil, h.ParentHash)
+	epochSwitchInfo, err = x.getEpochSwitchInfo(chain, nil, h.ParentHash)
 	if err != nil {
 		log.Error("[getEpochSwitchInfo] recursive error", "err", err, "hash", hash.Hex(), "number", h.Number.Uint64())
 		return nil, err
@@ -101,7 +118,7 @@ func (x *XDPoS_v2) getEpochSwitchInfo(chain consensus.ChainReader, header *types
 
 // IsEpochSwitchAtRound() is used by miner to check whether it mines a block in the same epoch with parent
 func (x *XDPoS_v2) isEpochSwitchAtRound(round types.Round, parentHeader *types.Header) (bool, uint64, error) {
-	epochNum := x.config.V2.SwitchBlock.Uint64()/x.config.Epoch + uint64(round)/x.config.Epoch
+	epochNum := x.config.V2.SwitchEpoch + uint64(round)/x.config.Epoch
 	// if parent is last v1 block and this is first v2 block, this is treated as epoch switch
 	if parentHeader.Number.Cmp(x.config.V2.SwitchBlock) == 0 {
 		return true, epochNum, nil
@@ -130,7 +147,7 @@ func (x *XDPoS_v2) GetCurrentEpochSwitchBlock(chain consensus.ChainReader, block
 	}
 
 	currentCheckpointNumber := epochSwitchInfo.EpochSwitchBlockInfo.Number.Uint64()
-	epochNum := x.config.V2.SwitchBlock.Uint64()/x.config.Epoch + uint64(epochSwitchInfo.EpochSwitchBlockInfo.Round)/x.config.Epoch
+	epochNum := x.config.V2.SwitchEpoch + uint64(epochSwitchInfo.EpochSwitchBlockInfo.Round)/x.config.Epoch
 	return currentCheckpointNumber, epochNum, nil
 }
 
@@ -148,13 +165,21 @@ func (x *XDPoS_v2) IsEpochSwitch(header *types.Header) (bool, uint64, error) {
 	}
 	parentRound := quorumCert.ProposedBlockInfo.Round
 	epochStartRound := round - round%types.Round(x.config.Epoch)
-	epochNum := x.config.V2.SwitchBlock.Uint64()/x.config.Epoch + uint64(round)/x.config.Epoch
+	epochNum := x.config.V2.SwitchEpoch + uint64(round)/x.config.Epoch
 	// if parent is last v1 block and this is first v2 block, this is treated as epoch switch
 	if quorumCert.ProposedBlockInfo.Number.Cmp(x.config.V2.SwitchBlock) == 0 {
 		log.Info("[IsEpochSwitch] true, parent equals V2.SwitchBlock", "round", round, "number", header.Number.Uint64(), "hash", header.Hash())
 		return true, epochNum, nil
 	}
-	log.Debug("[IsEpochSwitch]", "is", parentRound < epochStartRound, "parentRound", parentRound, "round", round, "number", header.Number.Uint64(), "epochNum", epochNum, "hash", header.Hash())
+	log.Debug("[IsEpochSwitch]", "is", parentRound < epochStartRound, "parentRound", parentRound, "round", round, "number", header.Number.Uint64(), "epochNum", epochNum, "hash", header.Hash().Hex())
+	// if isEpochSwitch, add to cache
+	if parentRound < epochStartRound {
+		x.round2epochBlockInfo.Add(round, &types.BlockInfo{
+			Hash:   header.Hash(),
+			Number: header.Number,
+			Round:  round,
+		})
+	}
 	return parentRound < epochStartRound, epochNum, nil
 }
 
@@ -175,6 +200,10 @@ func (x *XDPoS_v2) GetEpochSwitchInfoBetween(chain consensus.ChainReader, begin,
 			return nil, err
 		}
 		iteratorHeader = nil
+		// V2 switch epoch switch info has nil parent
+		if epochSwitchInfo.EpochSwitchParentBlockInfo == nil {
+			break
+		}
 		iteratorHash = epochSwitchInfo.EpochSwitchParentBlockInfo.Hash
 		iteratorNum = epochSwitchInfo.EpochSwitchBlockInfo.Number
 		if iteratorNum.Cmp(begin.Number) >= 0 {

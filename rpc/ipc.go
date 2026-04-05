@@ -24,12 +24,6 @@ import (
 	"github.com/XinFinOrg/XDPoSChain/p2p/netutil"
 )
 
-// CreateIPCListener creates an listener, on Unix platforms this is a unix socket, on
-// Windows this is a named pipe
-func CreateIPCListener(endpoint string) (net.Listener, error) {
-	return ipcListen(endpoint)
-}
-
 // ServeListener accepts connections on l, serving JSON-RPC on them.
 func (s *Server) ServeListener(l net.Listener) error {
 	for {
@@ -52,11 +46,16 @@ func (s *Server) ServeListener(l net.Listener) error {
 // The context is used for the initial connection establishment. It does not
 // affect subsequent interactions with the client.
 func DialIPC(ctx context.Context, endpoint string) (*Client, error) {
-	return newClient(ctx, func(ctx context.Context) (ServerCodec, error) {
+	cfg := new(clientConfig)
+	return newClient(ctx, cfg, newClientTransportIPC(endpoint))
+}
+
+func newClientTransportIPC(endpoint string) reconnectFunc {
+	return func(ctx context.Context) (ServerCodec, error) {
 		conn, err := newIPCConnection(ctx, endpoint)
 		if err != nil {
 			return nil, err
 		}
 		return NewCodec(conn), err
-	})
+	}
 }

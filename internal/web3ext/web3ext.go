@@ -168,6 +168,17 @@ web3._extend({
 			params: 2,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter, web3._extend.formatters.inputBlockNumberFormatter]
 		}),
+		new web3._extend.Method({
+			name: 'getBlockInfoByEpochNum',
+			call: 'XDPoS_getBlockInfoByEpochNum',
+			params: 1,
+		}),
+		new web3._extend.Method({
+			name: 'getRewardByAccount',
+			call: 'XDPoS_getRewardByAccount',
+			params: 3,
+			inputFormatter: [null, web3._extend.formatters.inputBlockNumberFormatter, web3._extend.formatters.inputBlockNumberFormatter]
+		}),
 	],
 	properties: [
 		new web3._extend.Property({
@@ -193,6 +204,16 @@ web3._extend({
 			params: 1
 		}),
 		new web3._extend.Method({
+			name: 'addTrustedPeer',
+			call: 'admin_addTrustedPeer',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'removeTrustedPeer',
+			call: 'admin_removeTrustedPeer',
+			params: 1
+		}),
+		new web3._extend.Method({
 			name: 'exportChain',
 			call: 'admin_exportChain',
 			params: 1,
@@ -209,11 +230,23 @@ web3._extend({
 			params: 2
 		}),
 		new web3._extend.Method({
+			name: 'startHTTP',
+			call: 'admin_startHTTP',
+			params: 5,
+			inputFormatter: [null, null, null, null, null]
+		}),
+		new web3._extend.Method({
+			name: 'stopHTTP',
+			call: 'admin_stopHTTP'
+		}),
+		// This method is deprecated.
+		new web3._extend.Method({
 			name: 'startRPC',
 			call: 'admin_startRPC',
-			params: 4,
-			inputFormatter: [null, null, null, null]
+			params: 5,
+			inputFormatter: [null, null, null, null, null]
 		}),
+		// This method is deprecated.
 		new web3._extend.Method({
 			name: 'stopRPC',
 			call: 'admin_stopRPC'
@@ -286,11 +319,6 @@ web3._extend({
 			call: 'debug_chaindbCompact',
 		}),
 		new web3._extend.Method({
-			name: 'metrics',
-			call: 'debug_metrics',
-			params: 1
-		}),
-		new web3._extend.Method({
 			name: 'verbosity',
 			call: 'debug_verbosity',
 			params: 1
@@ -299,11 +327,6 @@ web3._extend({
 			name: 'vmodule',
 			call: 'debug_vmodule',
 			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'backtraceAt',
-			call: 'debug_backtraceAt',
-			params: 1,
 		}),
 		new web3._extend.Method({
 			name: 'stacks',
@@ -382,11 +405,6 @@ web3._extend({
 			params: 2
 		}),
 		new web3._extend.Method({
-			name: 'setMutexProfileRate',
-			call: 'debug_setMutexProfileRate',
-			params: 1
-		}),
-		new web3._extend.Method({
 			name: 'writeMutexProfile',
 			call: 'debug_writeMutexProfile',
 			params: 1
@@ -459,6 +477,11 @@ web3._extend({
 			call: 'debug_getModifiedAccountsByHash',
 			params: 2,
 			inputFormatter:[null, null],
+		}),
+		new web3._extend.Method({
+			name: 'dbGet',
+			call: 'debug_dbGet',
+			params: 1
 		}),
 	],
 	properties: []
@@ -534,9 +557,20 @@ web3._extend({
 			inputFormatter: [null, web3._extend.formatters.inputBlockNumberFormatter],
 		}),
 		new web3._extend.Method({
+			name: 'feeHistory',
+			call: 'eth_feeHistory',
+			params: 3,
+			inputFormatter: [null, web3._extend.formatters.inputBlockNumberFormatter, null]
+		}),
+		new web3._extend.Method({
 			name: 'getBlockReceipts',
 			call: 'eth_getBlockReceipts',
 			params: 1,
+		}),
+		new web3._extend.Method({
+			name: 'getCurrentTotalMinted',
+			call: 'eth_getCurrentTotalMinted',
+			params: 0,
 		}),
 	],
 	properties: [
@@ -551,6 +585,11 @@ web3._extend({
 				}
 				return formatted;
 			}
+		}),
+		new web3._extend.Property({
+			name: 'maxPriorityFeePerGas',
+			getter: 'eth_maxPriorityFeePerGas',
+			outputFormatter: web3._extend.utils.toBigNumber
 		}),
 	]
 });
@@ -1054,6 +1093,11 @@ web3._extend({
 				status.queued = web3._extend.utils.toDecimal(status.queued);
 				return status;
 			}
+		}),
+		new web3._extend.Method({
+			name: 'contentFrom',
+			call: 'txpool_contentFrom',
+			params: 1,
 		}),
 	]
 });

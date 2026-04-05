@@ -3,7 +3,9 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"math/big"
 
+	"github.com/XinFinOrg/XDPoSChain/common"
 	"github.com/XinFinOrg/XDPoSChain/core/types"
 )
 
@@ -85,20 +87,20 @@ var (
 
 	ErrEmptyEpochSwitchValidators = errors.New("empty validators list on epoch switch block")
 
-	ErrInvalidV2Extra                = errors.New("Invalid v2 extra in the block")
-	ErrInvalidQC                     = errors.New("Invalid QC content")
-	ErrInvalidQCSignatures           = errors.New("Invalid QC Signatures")
-	ErrInvalidTC                     = errors.New("Invalid TC content")
-	ErrInvalidTCSignatures           = errors.New("Invalid TC Signatures")
-	ErrEmptyBlockInfoHash            = errors.New("BlockInfo hash is empty")
-	ErrInvalidFieldInNonEpochSwitch  = errors.New("Invalid field exist in a non-epoch swtich block")
-	ErrValidatorNotWithinMasternodes = errors.New("Validator address is not in the master node list")
-	ErrCoinbaseAndValidatorMismatch  = errors.New("Validator and coinbase address in header does not match")
-	ErrNotItsTurn                    = errors.New("Not validator's turn to mine this block")
+	ErrInvalidV2Extra                = errors.New("invalid v2 extra in the block")
+	ErrInvalidQC                     = errors.New("invalid QC content")
+	ErrInvalidQCSignatures           = errors.New("invalid QC Signatures")
+	ErrInvalidTC                     = errors.New("invalid TC content")
+	ErrInvalidTCSignatures           = errors.New("invalid TC Signatures")
+	ErrEmptyBlockInfoHash            = errors.New("blockInfo hash is empty")
+	ErrInvalidFieldInNonEpochSwitch  = errors.New("invalid field exist in a non-epoch swtich block")
+	ErrValidatorNotWithinMasternodes = errors.New("validator address is not in the master node list")
+	ErrCoinbaseAndValidatorMismatch  = errors.New("validator and coinbase address in header does not match")
+	ErrNotItsTurn                    = errors.New("not validator's turn to mine this block")
 
-	ErrRoundInvalid = errors.New("Invalid Round, it shall be bigger than QC round")
+	ErrRoundInvalid = errors.New("invalid Round, it shall be bigger than QC round")
 
-	ErrAlreadyMined = errors.New("Already mined")
+	ErrAlreadyMined = errors.New("already mined")
 )
 
 type ErrIncomingMessageRoundNotEqualCurrentRound struct {
@@ -119,4 +121,15 @@ type ErrIncomingMessageRoundTooFarFromCurrentRound struct {
 
 func (e *ErrIncomingMessageRoundTooFarFromCurrentRound) Error() string {
 	return fmt.Sprintf("%s message round number: %v is too far away from currentRound: %v", e.Type, e.IncomingRound, e.CurrentRound)
+}
+
+type ErrIncomingMessageBlockNotFound struct {
+	Type                string
+	IncomingBlockHash   common.Hash
+	IncomingBlockNumber *big.Int
+	Err                 error
+}
+
+func (e *ErrIncomingMessageBlockNotFound) Error() string {
+	return fmt.Sprintf("%s proposed block is not found hash: %v, block number: %v, error: %s", e.Type, e.IncomingBlockHash.Hex(), e.IncomingBlockNumber, e.Err)
 }

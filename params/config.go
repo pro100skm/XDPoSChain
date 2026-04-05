@@ -19,6 +19,7 @@ package params
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 
 	"github.com/XinFinOrg/XDPoSChain/common"
@@ -32,10 +33,9 @@ const (
 )
 
 var (
-	XDCMainnetGenesisHash = common.HexToHash("4a9d748bd78a8d0385b67788c2435dcdb914f98a96250b68863a1f8b7642d6b1") // XDC Mainnet genesis hash to enforce below configs on
-	MainnetGenesisHash    = common.HexToHash("8d13370621558f4ed0da587934473c0404729f28b0ff1d50e5fdd840457a2f17") // Mainnet genesis hash to enforce below configs on
-	TestnetGenesisHash    = common.HexToHash("bdea512b4f12ff1135ec92c00dc047ffb93890c2ea1aa0eefe9b013d80640075") // Testnet genesis hash to enforce below configs on
-	DevnetGenesisHash     = common.HexToHash("ab6fd3cb7d1a489e03250c7d14c2d6d819a6a528d6380b31e8410951964ef423") // Devnet genesis hash to enforce below configs on
+	MainnetGenesisHash = common.HexToHash("0x4a9d748bd78a8d0385b67788c2435dcdb914f98a96250b68863a1f8b7642d6b1") // XDC Mainnet genesis hash to enforce below configs on
+	TestnetGenesisHash = common.HexToHash("0xbdea512b4f12ff1135ec92c00dc047ffb93890c2ea1aa0eefe9b013d80640075") // XDC Testnet genesis hash to enforce below configs on
+	DevnetGenesisHash  = common.HexToHash("0x3c636c841ebee9121374fa76bd5480d17a23e1ba61d425dde21d7b3caba864f4") // XDC Devnet genesis hash to enforce below configs on
 )
 
 var (
@@ -47,6 +47,7 @@ var (
 			TimeoutSyncThreshold: 3,
 			TimeoutPeriod:        30,
 			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
 		},
 		2000: {
 			MaxMasternodes:       108,
@@ -54,6 +55,42 @@ var (
 			CertThreshold:        0.667,
 			TimeoutSyncThreshold: 2,
 			TimeoutPeriod:        600,
+			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
+		},
+		8000: {
+			MaxMasternodes:       108,
+			SwitchRound:          8000,
+			CertThreshold:        0.667,
+			TimeoutSyncThreshold: 2,
+			TimeoutPeriod:        60,
+			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
+		},
+		220000: {
+			MaxMasternodes:       108,
+			SwitchRound:          220000,
+			CertThreshold:        0.667,
+			TimeoutSyncThreshold: 2,
+			TimeoutPeriod:        30,
+			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
+		},
+		460000: {
+			MaxMasternodes:       108,
+			SwitchRound:          460000,
+			CertThreshold:        0.667,
+			TimeoutSyncThreshold: 2,
+			TimeoutPeriod:        20,
+			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
+		},
+		3200000: {
+			MaxMasternodes:       108,
+			SwitchRound:          3200000,
+			CertThreshold:        0.667,
+			TimeoutSyncThreshold: 3,
+			TimeoutPeriod:        10,
 			MinePeriod:           2,
 		},
 	}
@@ -64,51 +101,85 @@ var (
 			SwitchRound:          0,
 			CertThreshold:        0.45,
 			TimeoutSyncThreshold: 3,
-			TimeoutPeriod:        20,
+			TimeoutPeriod:        60,
 			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
 		},
 		900000: {
 			MaxMasternodes:       108,
 			SwitchRound:          900000,
 			CertThreshold:        0.667,
 			TimeoutSyncThreshold: 3,
-			TimeoutPeriod:        30,
+			TimeoutPeriod:        60,
+			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
+		},
+		15000000: {
+			MaxMasternodes:       108,
+			SwitchRound:          15000000,
+			CertThreshold:        0.667,
+			TimeoutSyncThreshold: 3,
+			TimeoutPeriod:        10,
 			MinePeriod:           2,
 		},
 	}
 
 	DevnetV2Configs = map[uint64]*V2Config{
 		Default: {
-			MaxMasternodes:       108,
 			SwitchRound:          0,
 			CertThreshold:        0.667,
 			TimeoutSyncThreshold: 3,
-			TimeoutPeriod:        30,
+			TimeoutPeriod:        5,
 			MinePeriod:           2,
-		},
-		7956000: { // 2024.01.17 Devnet Deplyment Issue
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 2.0, MaxExponent: 5},
 			MaxMasternodes:       108,
-			SwitchRound:          7956000,
-			CertThreshold:        0.4,
-			TimeoutSyncThreshold: 3,
-			TimeoutPeriod:        30,
-			MinePeriod:           2,
+			MaxProtectorNodes:    100,
+			MaxObverserNodes:     1000,
+			MasternodeReward:     5000,
+			ProtectorReward:      4000,
+			ObserverReward:       1000,
 		},
-		7974000: {
-			MaxMasternodes:       108,
-			SwitchRound:          7974000,
+		252000: {
+			SwitchRound:          250000,
 			CertThreshold:        0.667,
 			TimeoutSyncThreshold: 3,
-			TimeoutPeriod:        30,
+			TimeoutPeriod:        5,
 			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 2.0, MaxExponent: 5},
+			MaxMasternodes:       10,
+			MaxProtectorNodes:    3,
+			MaxObverserNodes:     1,
+			MasternodeReward:     57.06,
+			ProtectorReward:      45.25,
+			ObserverReward:       22.62,
 		},
-		13625855: { // 2024.07.29 RPC call and reorg sync issue
-			MaxMasternodes:       108,
-			SwitchRound:          13625855,
-			CertThreshold:        0.4,
+		261000: {
+			SwitchRound:          261000,
+			CertThreshold:        0.667,
 			TimeoutSyncThreshold: 3,
-			TimeoutPeriod:        30,
+			TimeoutPeriod:        5,
 			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 2.0, MaxExponent: 5},
+			MaxMasternodes:       12,
+			MaxProtectorNodes:    0,
+			MaxObverserNodes:     1000,
+			MasternodeReward:     63.42, // 57.078 goes to node, 6.34 goes to foundation
+			ProtectorReward:      50.27, // 45.243 goes to node, 5.02 goes to foundation
+			ObserverReward:       25.13, // 22.671 goes to node, 2.51 goes to foundation
+		},
+		300000: {
+			SwitchRound:          300000,
+			CertThreshold:        0.667,
+			TimeoutSyncThreshold: 3,
+			TimeoutPeriod:        5,
+			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 2.0, MaxExponent: 5},
+			MaxMasternodes:       12,
+			MaxProtectorNodes:    2,
+			MaxObverserNodes:     2,
+			MasternodeReward:     63.42, // 57.078 goes to node, 6.34 goes to foundation
+			ProtectorReward:      50.27, // 45.243 goes to node, 5.02 goes to foundation
+			ObserverReward:       25.13, // 22.671 goes to node, 2.51 goes to foundation
 		},
 	}
 
@@ -120,6 +191,7 @@ var (
 			TimeoutSyncThreshold: 2,
 			TimeoutPeriod:        4,
 			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
 		},
 		10: {
 			MaxMasternodes:       18,
@@ -128,14 +200,23 @@ var (
 			TimeoutSyncThreshold: 2,
 			TimeoutPeriod:        4,
 			MinePeriod:           3,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
 		},
 		900: {
 			MaxMasternodes:       20,
+			MaxProtectorNodes:    17,
+			MaxObverserNodes:     1,
 			SwitchRound:          900,
 			CertThreshold:        0.667,
 			TimeoutSyncThreshold: 4,
 			TimeoutPeriod:        5,
 			MinePeriod:           2,
+			ExpTimeoutConfig:     ExpTimeoutConfig{Base: 1.0, MaxExponent: 0},
+			MasternodeReward:     500, // double as Reward
+			ProtectorReward:      400,
+			ObserverReward:       300.125,
+			LimitPenaltyEpoch:    1,
+			MinimumSigningTx:     2,
 		},
 	}
 
@@ -144,7 +225,6 @@ var (
 		ChainId:        big.NewInt(50),
 		HomesteadBlock: big.NewInt(1),
 		EIP150Block:    big.NewInt(2),
-		EIP150Hash:     common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
 		EIP155Block:    big.NewInt(3),
 		EIP158Block:    big.NewInt(3),
 		ByzantiumBlock: big.NewInt(4),
@@ -156,7 +236,8 @@ var (
 			Gap:                 450,
 			FoudationWalletAddr: common.HexToAddress("xdc92a289fe95a85c53b8d0d113cbaef0c1ec98ac65"),
 			V2: &V2{
-				SwitchBlock:   common.TIPV2SwitchBlock,
+				SwitchEpoch:   common.MaintnetConstant.TIPV2SwitchBlock.Uint64() / 900,
+				SwitchBlock:   common.MaintnetConstant.TIPV2SwitchBlock,
 				CurrentConfig: MainnetV2Configs[0],
 				AllConfigs:    MainnetV2Configs,
 			},
@@ -170,7 +251,6 @@ var (
 		DAOForkBlock:        big.NewInt(1920000),
 		DAOForkSupport:      true,
 		EIP150Block:         big.NewInt(2463000),
-		EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
 		EIP155Block:         big.NewInt(2675000),
 		EIP158Block:         big.NewInt(2675000),
 		ByzantiumBlock:      big.NewInt(4370000),
@@ -185,7 +265,6 @@ var (
 		DAOForkBlock:        nil,
 		DAOForkSupport:      false,
 		EIP150Block:         big.NewInt(2),
-		EIP150Hash:          common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
 		EIP155Block:         big.NewInt(3),
 		EIP158Block:         big.NewInt(3),
 		ByzantiumBlock:      big.NewInt(4),
@@ -198,7 +277,8 @@ var (
 			Gap:                 450,
 			FoudationWalletAddr: common.HexToAddress("xdc746249c61f5832c5eed53172776b460491bdcd5c"),
 			V2: &V2{
-				SwitchBlock:   common.TIPV2SwitchBlock,
+				SwitchEpoch:   common.TestnetConstant.TIPV2SwitchBlock.Uint64() / 900,
+				SwitchBlock:   common.TestnetConstant.TIPV2SwitchBlock,
 				CurrentConfig: TestnetV2Configs[0],
 				AllConfigs:    TestnetV2Configs,
 			},
@@ -208,46 +288,23 @@ var (
 	// DevnetChainConfig contains the chain parameters to run a node on the Ropsten test network.
 	DevnetChainConfig = &ChainConfig{
 		ChainId:        big.NewInt(551),
-		HomesteadBlock: big.NewInt(1),
-		EIP150Block:    big.NewInt(2),
-		EIP150Hash:     common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
-		EIP155Block:    big.NewInt(3),
-		EIP158Block:    big.NewInt(3),
-		ByzantiumBlock: big.NewInt(4),
+		HomesteadBlock: big.NewInt(0),
+		EIP150Block:    big.NewInt(0),
+		EIP155Block:    big.NewInt(0),
+		EIP158Block:    big.NewInt(0),
+		ByzantiumBlock: big.NewInt(0),
 		XDPoS: &XDPoSConfig{
 			Period:              2,
 			Epoch:               900,
-			Reward:              5000,
+			Reward:              10,
 			RewardCheckpoint:    900,
 			Gap:                 450,
-			FoudationWalletAddr: common.HexToAddress("0x746249c61f5832c5eed53172776b460491bdcd5c"),
+			FoudationWalletAddr: common.HexToAddress("0xde5b54e8e7b585153add32f472e8d545e5d42a82"),
 			V2: &V2{
-				SwitchBlock:   common.TIPV2SwitchBlock,
+				SwitchEpoch:   common.DevnetConstant.TIPV2SwitchBlock.Uint64() / 900,
+				SwitchBlock:   common.DevnetConstant.TIPV2SwitchBlock,
 				CurrentConfig: DevnetV2Configs[0],
 				AllConfigs:    DevnetV2Configs,
-			},
-		},
-	}
-
-	// RinkebyChainConfig contains the chain parameters to run a node on the Rinkeby test network.
-	RinkebyChainConfig = &ChainConfig{
-		ChainId:             big.NewInt(4),
-		HomesteadBlock:      big.NewInt(1),
-		DAOForkBlock:        nil,
-		DAOForkSupport:      true,
-		EIP150Block:         big.NewInt(2),
-		EIP150Hash:          common.HexToHash("0x9b095b36c15eaf13044373aef8ee0bd3a382a5abb92e402afa44b8249c3a90e9"),
-		EIP155Block:         big.NewInt(3),
-		EIP158Block:         big.NewInt(3),
-		ByzantiumBlock:      big.NewInt(1035301),
-		ConstantinopleBlock: nil,
-		XDPoS: &XDPoSConfig{
-			Period: 15,
-			Epoch:  900,
-			V2: &V2{
-				SwitchBlock:   big.NewInt(9999999999),
-				CurrentConfig: MainnetV2Configs[0],
-				AllConfigs:    MainnetV2Configs,
 			},
 		},
 	}
@@ -263,7 +320,6 @@ var (
 		DAOForkBlock:        nil,
 		DAOForkSupport:      false,
 		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.Hash{},
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
@@ -284,7 +340,6 @@ var (
 		DAOForkBlock:        nil,
 		DAOForkSupport:      false,
 		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.Hash{},
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
@@ -300,7 +355,6 @@ var (
 		DAOForkBlock:        nil,
 		DAOForkSupport:      false,
 		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.Hash{},
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
@@ -317,11 +371,10 @@ var (
 		DAOForkBlock:        nil,
 		DAOForkSupport:      false,
 		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.Hash{},
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: nil,
+		ConstantinopleBlock: big.NewInt(0),
 		Ethash:              new(EthashConfig),
 		Clique:              nil,
 		XDPoS: &XDPoSConfig{
@@ -331,6 +384,7 @@ var (
 			FoudationWalletAddr: common.HexToAddress("0x0000000000000000000000000000000000000068"),
 			Reward:              250,
 			V2: &V2{
+				SwitchEpoch:   1,
 				SwitchBlock:   big.NewInt(900),
 				CurrentConfig: UnitTestV2Configs[0],
 				AllConfigs:    UnitTestV2Configs,
@@ -344,7 +398,6 @@ var (
 		DAOForkBlock:        nil,
 		DAOForkSupport:      false,
 		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.Hash{},
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
@@ -370,9 +423,7 @@ type ChainConfig struct {
 	DAOForkSupport bool     `json:"daoForkSupport,omitempty"` // Whether the nodes supports or opposes the DAO hard-fork
 
 	// EIP150 implements the Gas price changes (https://github.com/ethereum/EIPs/issues/150)
-	EIP150Block *big.Int    `json:"eip150Block,omitempty"` // EIP150 HF block (nil = no fork)
-	EIP150Hash  common.Hash `json:"eip150Hash,omitempty"`  // EIP150 HF hash (needed for header only clients as only gas pricing changed)
-
+	EIP150Block *big.Int `json:"eip150Block,omitempty"` // EIP150 HF block (nil = no fork)
 	EIP155Block *big.Int `json:"eip155Block,omitempty"` // EIP155 HF block
 	EIP158Block *big.Int `json:"eip158Block,omitempty"` // EIP158 HF block
 
@@ -386,6 +437,7 @@ type ChainConfig struct {
 	MergeBlock      *big.Int `json:"mergeBlock,omitempty"`
 	ShanghaiBlock   *big.Int `json:"shanghaiBlock,omitempty"`
 	Eip1559Block    *big.Int `json:"eip1559Block,omitempty"`
+	CancunBlock     *big.Int `json:"cancunBlock,omitempty"`
 
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
@@ -427,6 +479,7 @@ type XDPoSConfig struct {
 type V2 struct {
 	lock sync.RWMutex // Protects the signer fields
 
+	SwitchEpoch   uint64
 	SwitchBlock   *big.Int             `json:"switchBlock"`
 	CurrentConfig *V2Config            `json:"config"`
 	AllConfigs    map[uint64]*V2Config `json:"allConfigs"`
@@ -437,15 +490,88 @@ type V2 struct {
 
 type V2Config struct {
 	MaxMasternodes       int     `json:"maxMasternodes"`       // v2 max masternodes
+	MaxProtectorNodes    int     `json:"maxProtectorNodes"`    // v2 max ProtectorNodes
+	MaxObverserNodes     int     `json:"maxObserverNodes"`     // v2 max ObserverNodes
 	SwitchRound          uint64  `json:"switchRound"`          // v1 to v2 switch block number
 	MinePeriod           int     `json:"minePeriod"`           // Miner mine period to mine a block
 	TimeoutSyncThreshold int     `json:"timeoutSyncThreshold"` // send syncInfo after number of timeout
 	TimeoutPeriod        int     `json:"timeoutPeriod"`        // Duration in ms
 	CertThreshold        float64 `json:"certificateThreshold"` // Necessary number of messages from master nodes to form a certificate
+
+	MasternodeReward float64 `json:"masternodeReward"` // Block reward per master node (core validator) - unit Ether
+	ProtectorReward  float64 `json:"protectorReward"`  // Block reward per protector - unit Ether
+	ObserverReward   float64 `json:"observerReward"`   // Block reward per observer - unit Ether
+
+	MinimumMinerBlockPerEpoch int `json:"minimumMinerBlockPerEpoch"` // Minimum block per epoch for a miner to not be penalized
+	LimitPenaltyEpoch         int `json:"limitPenaltyEpoch"`         // Epochs in a row that a penalty node needs to be penalized
+	MinimumSigningTx          int `json:"minimumSigningTx"`          // Signing txs that a node needs to produce to get out of penalty, after `LimitPenaltyEpoch`
+
+	ExpTimeoutConfig ExpTimeoutConfig `json:"expTimeoutConfig"`
+}
+
+type ExpTimeoutConfig struct {
+	Base        float64 `json:"base"`        // base in base^exponent
+	MaxExponent uint8   `json:"maxExponent"` // max exponent in base^exponent
 }
 
 func (c *XDPoSConfig) String() string {
 	return "XDPoS"
+}
+
+func (c *XDPoSConfig) Description(indent int) string {
+	if c == nil {
+		return "XDPoS: <nil>"
+	}
+
+	banner := "XDPoS\n"
+	prefix := strings.Repeat(" ", indent)
+	banner += fmt.Sprintf("%s- Period: %v\n", prefix, c.Period)
+	banner += fmt.Sprintf("%s- Epoch: %v\n", prefix, c.Epoch)
+	banner += fmt.Sprintf("%s- Reward: %v\n", prefix, c.Reward)
+	banner += fmt.Sprintf("%s- RewardCheckpoint: %v\n", prefix, c.RewardCheckpoint)
+	banner += fmt.Sprintf("%s- Gap: %v\n", prefix, c.Gap)
+	banner += fmt.Sprintf("%s- FoudationWalletAddr: %v\n", prefix, c.FoudationWalletAddr.Hex())
+	banner += fmt.Sprintf("%s- SkipV1Validation: %v\n", prefix, c.SkipV1Validation)
+	banner += fmt.Sprintf("%s- %s", prefix, c.V2.Description(indent+2))
+	return banner
+}
+
+func (v2 *V2) Description(indent int) string {
+	if v2 == nil {
+		return "V2: <nil>"
+	}
+
+	banner := "V2:\n"
+	prefix := strings.Repeat(" ", indent)
+	banner += fmt.Sprintf("%s- SwitchEpoch: %v\n", prefix, v2.SwitchEpoch)
+	banner += fmt.Sprintf("%s- SwitchBlock: %v\n", prefix, v2.SwitchBlock)
+	banner += fmt.Sprintf("%s- SkipV2Validation: %v\n", prefix, v2.SkipV2Validation)
+	banner += fmt.Sprintf("%s- %s", prefix, v2.CurrentConfig.Description("CurrentConfig", indent+2))
+	return banner
+}
+
+func (c *V2Config) Description(name string, indent int) string {
+	if c == nil {
+		return name + ": <nil>"
+	}
+
+	banner := name + ":\n"
+	prefix := strings.Repeat(" ", indent)
+	banner += fmt.Sprintf("%s- MaxMasternodes: %v\n", prefix, c.MaxMasternodes)
+	banner += fmt.Sprintf("%s- SwitchRound: %v\n", prefix, c.SwitchRound)
+	banner += fmt.Sprintf("%s- MinePeriod: %v\n", prefix, c.MinePeriod)
+	banner += fmt.Sprintf("%s- TimeoutSyncThreshold: %v\n", prefix, c.TimeoutSyncThreshold)
+	banner += fmt.Sprintf("%s- TimeoutPeriod: %v\n", prefix, c.TimeoutPeriod)
+	banner += fmt.Sprintf("%s- CertThreshold: %v", prefix, c.CertThreshold)
+	banner += fmt.Sprintf("%s- MasternodeReward: %v", prefix, c.MasternodeReward)
+	banner += fmt.Sprintf("%s- ProtectorReward: %v", prefix, c.ProtectorReward)
+	banner += fmt.Sprintf("%s- ObserverReward: %v", prefix, c.ObserverReward)
+	banner += fmt.Sprintf("%s- MinimumMinerBlockPerEpoch: %v", prefix, c.MinimumMinerBlockPerEpoch)
+	banner += fmt.Sprintf("%s- LimitPenaltyEpoch: %v", prefix, c.LimitPenaltyEpoch)
+	banner += fmt.Sprintf("%s- MinimumSigningTx: %v", prefix, c.MinimumSigningTx)
+	banner += fmt.Sprintf("%s- ExpTimeoutBase: %v", prefix, c.ExpTimeoutConfig.Base)
+	banner += fmt.Sprintf("%s- ExpTimeoutMaxExponent: %v", prefix, c.ExpTimeoutConfig.MaxExponent)
+	return banner
 }
 
 func (c *XDPoSConfig) BlockConsensusVersion(num *big.Int, extraByte []byte, extraCheck bool) string {
@@ -511,35 +637,63 @@ func (v *V2) ConfigIndex() []uint64 {
 	return v.configIndex
 }
 
-// String implements the fmt.Stringer interface.
-func (c *ChainConfig) String() string {
+// Description returns a human-readable description of ChainConfig.
+func (c *ChainConfig) Description() string {
 	var engine interface{}
 	switch {
 	case c.Ethash != nil:
 		engine = c.Ethash
 	case c.XDPoS != nil:
-		engine = c.XDPoS
+		engine = c.XDPoS.Description(4)
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v Istanbul: %v  BerlinBlock: %v LondonBlock: %v MergeBlock: %v ShanghaiBlock: %v Eip1559Block: %v Engine: %v}",
-		c.ChainId,
-		c.HomesteadBlock,
-		c.DAOForkBlock,
-		c.DAOForkSupport,
-		c.EIP150Block,
-		c.EIP155Block,
-		c.EIP158Block,
-		c.ByzantiumBlock,
-		c.ConstantinopleBlock,
-		common.TIPXDCXCancellationFee,
-		common.BerlinBlock,
-		common.LondonBlock,
-		common.MergeBlock,
-		common.ShanghaiBlock,
-		common.Eip1559Block,
-		engine,
-	)
+	berlinBlock := common.BerlinBlock
+	if c.BerlinBlock != nil {
+		berlinBlock = c.BerlinBlock
+	}
+	londonBlock := common.LondonBlock
+	if c.LondonBlock != nil {
+		londonBlock = c.LondonBlock
+	}
+	mergeBlock := common.MergeBlock
+	if c.MergeBlock != nil {
+		mergeBlock = c.MergeBlock
+	}
+	shanghaiBlock := common.ShanghaiBlock
+	if c.ShanghaiBlock != nil {
+		shanghaiBlock = c.ShanghaiBlock
+	}
+	eip1559Block := common.Eip1559Block
+	if c.Eip1559Block != nil {
+		eip1559Block = c.Eip1559Block
+	}
+	cancunBlock := common.CancunBlock
+	if c.CancunBlock != nil {
+		cancunBlock = c.CancunBlock
+	}
+
+	var banner = "Chain configuration:\n"
+	banner += fmt.Sprintf("  - ChainID:                     %-8v\n", c.ChainId)
+	banner += fmt.Sprintf("  - Homestead:                   %-8v\n", c.HomesteadBlock)
+	banner += fmt.Sprintf("  - DAO Fork:                    %-8v\n", c.DAOForkBlock)
+	banner += fmt.Sprintf("  - DAO Support:                 %-8v\n", c.DAOForkSupport)
+	banner += fmt.Sprintf("  - Tangerine Whistle (EIP 150): %-8v\n", c.EIP150Block)
+	banner += fmt.Sprintf("  - Spurious Dragon (EIP 155):   %-8v\n", c.EIP155Block)
+	banner += fmt.Sprintf("  - Byzantium:                   %-8v\n", c.ByzantiumBlock)
+	banner += fmt.Sprintf("  - Constantinople:              %-8v\n", c.ConstantinopleBlock)
+	banner += fmt.Sprintf("  - Petersburg:                  %-8v\n", c.PetersburgBlock)
+	banner += fmt.Sprintf("  - Istanbul:                    %-8v\n", c.IstanbulBlock)
+	banner += fmt.Sprintf("  - Berlin:                      %-8v\n", berlinBlock)
+	banner += fmt.Sprintf("  - London:                      %-8v\n", londonBlock)
+	banner += fmt.Sprintf("  - Merge:                       %-8v\n", mergeBlock)
+	banner += fmt.Sprintf("  - Shanghai:                    %-8v\n", shanghaiBlock)
+	banner += fmt.Sprintf("  - Eip1559:                     %-8v\n", eip1559Block)
+	banner += fmt.Sprintf("  - Cancun:                      %-8v\n", cancunBlock)
+	banner += fmt.Sprintf("  - TIPUpgradeReward:            %-8v\n", common.TIPUpgradeReward)
+	banner += fmt.Sprintf("  - TIPEpochHalving:             %-8v\n", common.TIPEpochHalving)
+	banner += fmt.Sprintf("  - Engine:                      %v", engine)
+	return banner
 }
 
 // IsHomestead returns whether num is either equal to the homestead block or greater.
@@ -609,6 +763,10 @@ func (c *ChainConfig) IsEIP1559(num *big.Int) bool {
 	return isForked(common.Eip1559Block, num) || isForked(c.Eip1559Block, num)
 }
 
+func (c *ChainConfig) IsCancun(num *big.Int) bool {
+	return isForked(common.CancunBlock, num) || isForked(c.CancunBlock, num)
+}
+
 func (c *ChainConfig) IsTIP2019(num *big.Int) bool {
 	return isForked(common.TIP2019Block, num)
 }
@@ -652,6 +810,18 @@ func (c *ChainConfig) IsTIPXDCXLending(num *big.Int) bool {
 
 func (c *ChainConfig) IsTIPXDCXCancellationFee(num *big.Int) bool {
 	return isForked(common.TIPXDCXCancellationFee, num)
+}
+
+func (c *ChainConfig) IsTIPUpgradeReward(num *big.Int) bool {
+	return isForked(common.TIPUpgradeReward, num)
+}
+
+func (c *ChainConfig) IsTIPUpgradePenalty(num *big.Int) bool {
+	return isForked(common.TipUpgradePenalty, num)
+}
+
+func (c *ChainConfig) IsTIPEpochHalving(num *big.Int) bool {
+	return isForked(common.TIPEpochHalving, num)
 }
 
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
@@ -716,6 +886,28 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, head *big.Int) *Confi
 	}
 	if isForkIncompatible(c.ConstantinopleBlock, newcfg.ConstantinopleBlock, head) {
 		return newCompatError("Constantinople fork block", c.ConstantinopleBlock, newcfg.ConstantinopleBlock)
+	}
+	if isForkIncompatible(c.PetersburgBlock, newcfg.PetersburgBlock, head) {
+		// the only case where we allow Petersburg to be set in the past is if it is equal to Constantinople
+		// mainly to satisfy fork ordering requirements which state that Petersburg fork be set if Constantinople fork is set
+		if isForkIncompatible(c.ConstantinopleBlock, newcfg.PetersburgBlock, head) {
+			return newCompatError("Petersburg fork block", c.PetersburgBlock, newcfg.PetersburgBlock)
+		}
+	}
+	if isForkIncompatible(c.IstanbulBlock, newcfg.IstanbulBlock, head) {
+		return newCompatError("Istanbul fork block", c.IstanbulBlock, newcfg.IstanbulBlock)
+	}
+	if isForkIncompatible(c.BerlinBlock, newcfg.BerlinBlock, head) {
+		return newCompatError("Berlin fork block", c.BerlinBlock, newcfg.BerlinBlock)
+	}
+	if isForkIncompatible(c.LondonBlock, newcfg.LondonBlock, head) {
+		return newCompatError("London fork block", c.LondonBlock, newcfg.LondonBlock)
+	}
+	if isForkIncompatible(c.ShanghaiBlock, newcfg.ShanghaiBlock, head) {
+		return newCompatError("Shanghai fork timestamp", c.ShanghaiBlock, newcfg.ShanghaiBlock)
+	}
+	if isForkIncompatible(c.CancunBlock, newcfg.CancunBlock, head) {
+		return newCompatError("Cancun fork block", c.CancunBlock, newcfg.CancunBlock)
 	}
 	return nil
 }
@@ -788,6 +980,7 @@ type Rules struct {
 	IsMerge, IsShanghai                                     bool
 	IsXDCxDisable                                           bool
 	IsEIP1559                                               bool
+	IsCancun                                                bool
 }
 
 func (c *ChainConfig) Rules(num *big.Int) Rules {
@@ -811,5 +1004,6 @@ func (c *ChainConfig) Rules(num *big.Int) Rules {
 		IsShanghai:       c.IsShanghai(num),
 		IsXDCxDisable:    c.IsXDCxDisable(num),
 		IsEIP1559:        c.IsEIP1559(num),
+		IsCancun:         c.IsCancun(num),
 	}
 }

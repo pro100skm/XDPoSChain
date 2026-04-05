@@ -43,7 +43,7 @@ type UserPrompter interface {
 	// choice to be made, returning that choice.
 	PromptConfirm(prompt string) (bool, error)
 
-	// SetHistory sets the the input scrollback history that the prompter will allow
+	// SetHistory sets the input scrollback history that the prompter will allow
 	// the user to scroll back to.
 	SetHistory(history []string)
 
@@ -143,13 +143,13 @@ func (p *terminalPrompter) PromptPassword(prompt string) (passwd string, err err
 // choice to be made, returning that choice.
 func (p *terminalPrompter) PromptConfirm(prompt string) (bool, error) {
 	input, err := p.Prompt(prompt + " [y/N] ")
-	if len(input) > 0 && strings.ToUpper(input[:1]) == "Y" {
+	if len(input) > 0 && strings.EqualFold(input[:1], "y") {
 		return true, nil
 	}
 	return false, err
 }
 
-// SetHistory sets the the input scrollback history that the prompter will allow
+// SetHistory sets the input scrollback history that the prompter will allow
 // the user to scroll back to.
 func (p *terminalPrompter) SetHistory(history []string) {
 	p.State.ReadHistory(strings.NewReader(strings.Join(history, "\n")))

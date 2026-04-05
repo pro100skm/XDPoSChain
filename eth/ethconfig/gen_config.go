@@ -7,11 +7,15 @@ import (
 	"time"
 
 	"github.com/XinFinOrg/XDPoSChain/common"
+	"github.com/XinFinOrg/XDPoSChain/common/hexutil"
 	"github.com/XinFinOrg/XDPoSChain/consensus/ethash"
 	"github.com/XinFinOrg/XDPoSChain/core"
+	"github.com/XinFinOrg/XDPoSChain/core/txpool"
 	"github.com/XinFinOrg/XDPoSChain/eth/downloader"
 	"github.com/XinFinOrg/XDPoSChain/eth/gasprice"
 )
+
+var _ = (*configMarshaling)(nil)
 
 // MarshalTOML marshals as TOML.
 func (c Config) MarshalTOML() (interface{}, error) {
@@ -25,18 +29,19 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		SkipBcVersionCheck      bool `toml:"-"`
 		DatabaseHandles         int  `toml:"-"`
 		DatabaseCache           int
-		TrieCache               int
+		TrieCleanCache          int
+		TrieDirtyCache          int
 		TrieTimeout             time.Duration
+		Preimages               bool
+		FilterLogCacheSize      int
 		Etherbase               common.Address `toml:",omitempty"`
 		MinerThreads            int            `toml:",omitempty"`
-		ExtraData               []byte         `toml:",omitempty"`
+		ExtraData               hexutil.Bytes  `toml:",omitempty"`
 		GasPrice                *big.Int
-		FilterLogCacheSize      int
 		Ethash                  ethash.Config
-		TxPool                  core.TxPoolConfig
+		TxPool                  txpool.Config
 		GPO                     gasprice.Config
 		EnablePreimageRecording bool
-		DocRoot                 string `toml:"-"`
 		RPCGasCap               uint64
 		RPCTxFeeCap             float64
 	}
@@ -50,18 +55,19 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
 	enc.DatabaseHandles = c.DatabaseHandles
 	enc.DatabaseCache = c.DatabaseCache
-	enc.TrieCache = c.TrieCache
+	enc.TrieCleanCache = c.TrieCleanCache
+	enc.TrieDirtyCache = c.TrieDirtyCache
 	enc.TrieTimeout = c.TrieTimeout
+	enc.Preimages = c.Preimages
+	enc.FilterLogCacheSize = c.FilterLogCacheSize
 	enc.Etherbase = c.Etherbase
 	enc.MinerThreads = c.MinerThreads
 	enc.ExtraData = c.ExtraData
 	enc.GasPrice = c.GasPrice
-	enc.FilterLogCacheSize = c.FilterLogCacheSize
 	enc.Ethash = c.Ethash
 	enc.TxPool = c.TxPool
 	enc.GPO = c.GPO
 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-	enc.DocRoot = c.DocRoot
 	enc.RPCGasCap = c.RPCGasCap
 	enc.RPCTxFeeCap = c.RPCTxFeeCap
 	return &enc, nil
@@ -79,18 +85,19 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		SkipBcVersionCheck      *bool `toml:"-"`
 		DatabaseHandles         *int  `toml:"-"`
 		DatabaseCache           *int
-		TrieCache               *int
+		TrieCleanCache          *int
+		TrieDirtyCache          *int
 		TrieTimeout             *time.Duration
+		Preimages               *bool
+		FilterLogCacheSize      *int
 		Etherbase               *common.Address `toml:",omitempty"`
 		MinerThreads            *int            `toml:",omitempty"`
-		ExtraData               []byte          `toml:",omitempty"`
+		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
 		GasPrice                *big.Int
-		FilterLogCacheSize      *int
 		Ethash                  *ethash.Config
-		TxPool                  *core.TxPoolConfig
+		TxPool                  *txpool.Config
 		GPO                     *gasprice.Config
 		EnablePreimageRecording *bool
-		DocRoot                 *string `toml:"-"`
 		RPCGasCap               *uint64
 		RPCTxFeeCap             *float64
 	}
@@ -125,11 +132,20 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	if dec.DatabaseCache != nil {
 		c.DatabaseCache = *dec.DatabaseCache
 	}
-	if dec.TrieCache != nil {
-		c.TrieCache = *dec.TrieCache
+	if dec.TrieCleanCache != nil {
+		c.TrieCleanCache = *dec.TrieCleanCache
+	}
+	if dec.TrieDirtyCache != nil {
+		c.TrieDirtyCache = *dec.TrieDirtyCache
 	}
 	if dec.TrieTimeout != nil {
 		c.TrieTimeout = *dec.TrieTimeout
+	}
+	if dec.Preimages != nil {
+		c.Preimages = *dec.Preimages
+	}
+	if dec.FilterLogCacheSize != nil {
+		c.FilterLogCacheSize = *dec.FilterLogCacheSize
 	}
 	if dec.Etherbase != nil {
 		c.Etherbase = *dec.Etherbase
@@ -138,13 +154,10 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		c.MinerThreads = *dec.MinerThreads
 	}
 	if dec.ExtraData != nil {
-		c.ExtraData = dec.ExtraData
+		c.ExtraData = *dec.ExtraData
 	}
 	if dec.GasPrice != nil {
 		c.GasPrice = dec.GasPrice
-	}
-	if dec.FilterLogCacheSize != nil {
-		c.FilterLogCacheSize = *dec.FilterLogCacheSize
 	}
 	if dec.Ethash != nil {
 		c.Ethash = *dec.Ethash
@@ -157,9 +170,6 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.EnablePreimageRecording != nil {
 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
-	}
-	if dec.DocRoot != nil {
-		c.DocRoot = *dec.DocRoot
 	}
 	if dec.RPCGasCap != nil {
 		c.RPCGasCap = *dec.RPCGasCap

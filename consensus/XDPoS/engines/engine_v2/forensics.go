@@ -87,6 +87,7 @@ Forensics runs in a seperate go routine as its no system critical
 Link to the flow diagram: https://hashlabs.atlassian.net/wiki/spaces/HASHLABS/pages/97878029/Forensics+Diagram+flow
 */
 func (f *Forensics) ProcessForensics(chain consensus.ChainReader, engine *XDPoS_v2, incomingQC types.QuorumCert) error {
+	return nil
 	log.Debug("Received a QC in forensics", "QC", incomingQC)
 	// Clone the values to a temporary variable
 	highestCommittedQCs := f.HighestCommittedQCs
@@ -164,7 +165,7 @@ func (f *Forensics) SendForensicProof(chain consensus.ChainReader, engine *XDPoS
 
 	if ancestorBlock == nil {
 		log.Error("[SendForensicProof] Unable to find the ancestor block by its hash", "Hash", ancestorHash)
-		return errors.New("Can't find ancestor block via hash")
+		return errors.New("can't find ancestor block via hash")
 	}
 
 	content, err := json.Marshal(&types.ForensicsContent{
@@ -209,7 +210,7 @@ func (f *Forensics) findAncestorQCs(chain consensus.ChainReader, currentQc types
 		parentHash := quorumCertificate.ProposedBlockInfo.Hash
 		parentHeader := chain.GetHeaderByHash(parentHash)
 		if parentHeader == nil {
-			log.Error("[findAncestorQCs] Forensics findAncestorQCs unable to find its parent block header", "BlockNum", parentHeader.Number.Int64(), "ParentHash", parentHash.Hex())
+			log.Error("[findAncestorQCs] Forensics findAncestorQCs unable to find its parent block header", "ParentHash", parentHash.Hex())
 			return nil, errors.New("unable to find parent block header in forensics")
 		}
 		var decodedExtraField types.ExtraFields_v2
@@ -352,7 +353,7 @@ func (f *Forensics) FindAncestorBlockHash(chain consensus.ChainReader, firstBloc
 	}
 
 	// Now, they are on the same starting line, we try find the common ancestor
-	for lowerBlockNumHash.Hex() != higherBlockNumberHash.Hex() {
+	for lowerBlockNumHash != higherBlockNumberHash {
 		lowerBlockNumHash = chain.GetHeaderByHash(lowerBlockNumHash).ParentHash
 		higherBlockNumberHash = chain.GetHeaderByHash(higherBlockNumberHash).ParentHash
 		// Append the path
@@ -394,6 +395,7 @@ Forensics runs in a seperate go routine as its no system critical
 Link to the flow diagram: https://hashlabs.atlassian.net/wiki/spaces/HASHLABS/pages/99516417/Vote+Equivocation+detection+specification
 */
 func (f *Forensics) ProcessVoteEquivocation(chain consensus.ChainReader, engine *XDPoS_v2, incomingVote *types.Vote) error {
+	return nil
 	log.Debug("Received a vote in forensics", "vote", incomingVote)
 	// Clone the values to a temporary variable
 	highestCommittedQCs := f.HighestCommittedQCs
@@ -455,7 +457,7 @@ func (f *Forensics) isExtendingFromAncestor(blockChainReader consensus.ChainRead
 	for i := 0; i < blockNumDiff; i++ {
 		parentBlock := blockChainReader.GetHeaderByHash(nextBlockHash)
 		if parentBlock == nil {
-			return false, fmt.Errorf("Could not find its parent block when checking whether currentBlock %v with hash %v is extending from the ancestorBlock %v", currentBlock.Number, currentBlock.Hash, ancestorBlock.Number)
+			return false, fmt.Errorf("could not find its parent block when checking whether currentBlock %v with hash %v is extending from the ancestorBlock %v", currentBlock.Number, currentBlock.Hash, ancestorBlock.Number)
 		} else {
 			nextBlockHash = parentBlock.ParentHash
 		}
@@ -484,6 +486,7 @@ func (f *Forensics) isVoteBlamed(chain consensus.ChainReader, highestCommittedQC
 }
 
 func (f *Forensics) DetectEquivocationInVotePool(vote *types.Vote, votePool *utils.Pool) {
+	return
 	poolKey := vote.PoolKey()
 	votePoolKeys := votePool.PoolObjKeysList()
 	signer, err := GetVoteSignerAddresses(vote)

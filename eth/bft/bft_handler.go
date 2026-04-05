@@ -11,7 +11,7 @@ import (
 
 const maxBlockDist = 7 // Maximum allowed backward distance from the chain head, 7 is just a magic number indicate very close block
 
-//Define Boradcast Group functions
+// Define Boradcast Group functions
 type broadcastVoteFn func(*types.Vote)
 type broadcastTimeoutFn func(*types.Timeout)
 type broadcastSyncInfoFn func(*types.SyncInfo)
@@ -93,13 +93,16 @@ func (b *Bfter) Vote(peer string, vote *types.Vote) error {
 		return err
 	}
 
-	b.broadcastCh <- vote
-
 	if verified {
+		b.broadcastCh <- vote
 		err = b.consensus.voteHandler(b.blockChainReader, vote)
 		if err != nil {
 			if _, ok := err.(*utils.ErrIncomingMessageRoundTooFarFromCurrentRound); ok {
 				log.Debug("vote round not equal", "error", err, "vote", vote.Hash())
+				return err
+			}
+			if _, ok := err.(*utils.ErrIncomingMessageBlockNotFound); ok {
+				log.Debug("vote proposed block not found", "error", err, "vote", vote.Hash())
 				return err
 			}
 			log.Error("handle BFT Vote", "error", err)
@@ -110,8 +113,6 @@ func (b *Bfter) Vote(peer string, vote *types.Vote) error {
 	return nil
 }
 func (b *Bfter) Timeout(peer string, timeout *types.Timeout) error {
-	log.Debug("Receive Timeout", "timeout", timeout)
-
 	gapNum := timeout.GapNumber
 
 	// dist times 3, ex: timeout message's gap number is based on block and find out it's epoch switch number, then mod 900 then minus 450
@@ -125,9 +126,10 @@ func (b *Bfter) Timeout(peer string, timeout *types.Timeout) error {
 		log.Error("Verify BFT Timeout", "timeoutRound", timeout.Round, "timeoutGapNum", gapNum, "error", err)
 		return err
 	}
+	log.Debug("Receive Timeout", "gap", gapNum, "hash", timeout.Hash().Hex(), "round", timeout.Round, "signer", timeout.GetSigner().Hex()) //get signer after verifyTimeout
 
-	b.broadcastCh <- timeout
 	if verified {
+		b.broadcastCh <- timeout
 		err = b.consensus.timeoutHandler(b.blockChainReader, timeout)
 		if err != nil {
 			if _, ok := err.(*utils.ErrIncomingMessageRoundNotEqualCurrentRound); ok {
@@ -156,9 +158,9 @@ func (b *Bfter) SyncInfo(peer string, syncInfo *types.SyncInfo) error {
 		return err
 	}
 
-	b.broadcastCh <- syncInfo
 	// Process only if verified and qualified
 	if verified {
+		b.broadcastCh <- syncInfo
 		err = b.consensus.syncInfoHandler(b.blockChainReader, syncInfo)
 		if err != nil {
 			log.Error("handle BFT SyncInfo", "error", err)

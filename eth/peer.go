@@ -27,7 +27,7 @@ import (
 	"github.com/XinFinOrg/XDPoSChain/core/types"
 	"github.com/XinFinOrg/XDPoSChain/p2p"
 	"github.com/XinFinOrg/XDPoSChain/rlp"
-	mapset "github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 var (
@@ -37,13 +37,13 @@ var (
 )
 
 const (
-	maxKnownTxs        = 32768 // Maximum transactions hashes to keep in the known list (prevent DOS)
-	maxKnownOrderTxs   = 32768 // Maximum transactions hashes to keep in the known list (prevent DOS)
-	maxKnownLendingTxs = 32768 // Maximum transactions hashes to keep in the known list (prevent DOS)
-	maxKnownBlocks     = 1024  // Maximum block hashes to keep in the known list (prevent DOS)
-	maxKnownVote       = 1024  // Maximum transactions hashes to keep in the known list (prevent DOS)
-	maxKnownTimeout    = 1024  // Maximum transactions hashes to keep in the known list (prevent DOS)
-	maxKnownSyncInfo   = 1024  // Maximum transactions hashes to keep in the known list (prevent DOS)
+	maxKnownTxs        = 32768  // Maximum transactions hashes to keep in the known list (prevent DOS)
+	maxKnownOrderTxs   = 32768  // Maximum transactions hashes to keep in the known list (prevent DOS)
+	maxKnownLendingTxs = 32768  // Maximum transactions hashes to keep in the known list (prevent DOS)
+	maxKnownBlocks     = 1024   // Maximum block hashes to keep in the known list (prevent DOS)
+	maxKnownVote       = 131072 // Maximum transactions hashes to keep in the known list (prevent DOS)
+	maxKnownTimeout    = 131072 // Maximum transactions hashes to keep in the known list (prevent DOS)
+	maxKnownSyncInfo   = 131072 // Maximum transactions hashes to keep in the known list (prevent DOS)
 	handshakeTimeout   = 5 * time.Second
 )
 
@@ -69,15 +69,15 @@ type peer struct {
 	td   *big.Int
 	lock sync.RWMutex
 
-	knownTxs    mapset.Set // Set of transaction hashes known to be known by this peer
-	knownBlocks mapset.Set // Set of block hashes known to be known by this peer
+	knownTxs    mapset.Set[common.Hash] // Set of transaction hashes known to be known by this peer
+	knownBlocks mapset.Set[common.Hash] // Set of block hashes known to be known by this peer
 
-	knownOrderTxs   mapset.Set // Set of order transaction hashes known to be known by this peer
-	knownLendingTxs mapset.Set // Set of lending transaction hashes known to be known by this peer
+	knownOrderTxs   mapset.Set[common.Hash] // Set of order transaction hashes known to be known by this peer
+	knownLendingTxs mapset.Set[common.Hash] // Set of lending transaction hashes known to be known by this peer
 
-	knownVote     mapset.Set // Set of BFT Vote known to be known by this peer
-	knownTimeout  mapset.Set // Set of BFT timeout known to be known by this peer
-	knownSyncInfo mapset.Set // Set of BFT Sync Info known to be known by this peer
+	knownVote     mapset.Set[common.Hash] // Set of BFT Vote known to be known by this peer
+	knownTimeout  mapset.Set[common.Hash] // Set of BFT timeout known to be known by this peer
+	knownSyncInfo mapset.Set[common.Hash] // Set of BFT Sync Info known to be known by this peer
 }
 
 func newPeer(version int, p *p2p.Peer, rw p2p.MsgReadWriter) *peer {
@@ -88,14 +88,14 @@ func newPeer(version int, p *p2p.Peer, rw p2p.MsgReadWriter) *peer {
 		rw:              rw,
 		version:         version,
 		id:              fmt.Sprintf("%x", id[:8]),
-		knownTxs:        mapset.NewSet(),
-		knownBlocks:     mapset.NewSet(),
-		knownOrderTxs:   mapset.NewSet(),
-		knownLendingTxs: mapset.NewSet(),
+		knownTxs:        mapset.NewSet[common.Hash](),
+		knownBlocks:     mapset.NewSet[common.Hash](),
+		knownOrderTxs:   mapset.NewSet[common.Hash](),
+		knownLendingTxs: mapset.NewSet[common.Hash](),
 
-		knownVote:     mapset.NewSet(),
-		knownTimeout:  mapset.NewSet(),
-		knownSyncInfo: mapset.NewSet(),
+		knownVote:     mapset.NewSet[common.Hash](),
+		knownTimeout:  mapset.NewSet[common.Hash](),
+		knownSyncInfo: mapset.NewSet[common.Hash](),
 	}
 }
 

@@ -30,6 +30,10 @@ func (x *XDPoS_v2) sendVote(chainReader consensus.ChainReader, blockInfo *types.
 	}
 	epochSwitchNumber := epochSwitchInfo.EpochSwitchBlockInfo.Number.Uint64()
 	gapNumber := epochSwitchNumber - epochSwitchNumber%x.config.Epoch - x.config.Gap
+	// prevent overflow
+	if epochSwitchNumber-epochSwitchNumber%x.config.Epoch < x.config.Gap {
+		gapNumber = 0
+	}
 	signedHash, err := x.signSignature(types.VoteSigHash(&types.VoteForSign{
 		ProposedBlockInfo: blockInfo,
 		GapNumber:         gapNumber,
@@ -76,10 +80,14 @@ func (x *XDPoS_v2) voteHandler(chain consensus.ChainReader, voteMsg *types.Vote)
 	go x.ForensicsProcessor.DetectEquivocationInVotePool(voteMsg, x.votePool)
 	go x.ForensicsProcessor.ProcessVoteEquivocation(chain, x, voteMsg)
 
-	epochInfo, err := x.getEpochSwitchInfo(chain, chain.CurrentHeader(), chain.CurrentHeader().Hash())
+	epochInfo, err := x.getEpochSwitchInfo(chain, nil, voteMsg.ProposedBlockInfo.Hash)
 	if err != nil {
-		log.Error("[voteHandler] Error when getting epoch switch Info", "error", err)
-		return errors.New("Fail on voteHandler due to failure in getting epoch switch info")
+		return &utils.ErrIncomingMessageBlockNotFound{
+			Type:                "vote",
+			IncomingBlockHash:   voteMsg.ProposedBlockInfo.Hash,
+			IncomingBlockNumber: voteMsg.ProposedBlockInfo.Number,
+			Err:                 err,
+		}
 	}
 
 	certThreshold := x.config.V2.Config(uint64(voteMsg.ProposedBlockInfo.Round)).CertThreshold
@@ -175,10 +183,10 @@ func (x *XDPoS_v2) onVotePoolThresholdReached(chain consensus.ChainReader, poole
 		}
 	}
 
-	epochInfo, err := x.getEpochSwitchInfo(chain, chain.CurrentHeader(), chain.CurrentHeader().Hash())
+	epochInfo, err := x.getEpochSwitchInfo(chain, nil, currentVoteMsg.(*types.Vote).ProposedBlockInfo.Hash)
 	if err != nil {
 		log.Error("[voteHandler] Error when getting epoch switch Info", "error", err)
-		return errors.New("Fail on voteHandler due to failure in getting epoch switch info")
+		return errors.New("fail on voteHandler due to failure in getting epoch switch info")
 	}
 
 	// Skip and wait for the next vote to process again if valid votes is less than what we required
@@ -249,7 +257,7 @@ func (x *XDPoS_v2) isExtendingFromAncestor(blockChainReader consensus.ChainReade
 	for i := 0; i < blockNumDiff; i++ {
 		parentBlock := blockChainReader.GetHeaderByHash(nextBlockHash)
 		if parentBlock == nil {
-			return false, fmt.Errorf("Could not find its parent block when checking whether currentBlock %v with hash %v is extending from the ancestorBlock %v", currentBlock.Number, currentBlock.Hash, ancestorBlock.Number)
+			return false, fmt.Errorf("could not find its parent block when checking whether currentBlock %v with hash %v is extending from the ancestorBlock %v", currentBlock.Number, currentBlock.Hash, ancestorBlock.Number)
 		} else {
 			nextBlockHash = parentBlock.ParentHash
 		}

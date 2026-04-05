@@ -3,6 +3,7 @@ package engine_v2_tests
 import (
 	"crypto/ecdsa"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"testing"
 	"time"
@@ -16,7 +17,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var errTimeoutAfter5Seconds = errors.New("timeout after 5 seconds")
+
 func TestProcessQcShallSetForensicsCommittedQc(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	blockchain, _, currentBlock, signer, signFn, _ := PrepareXDCTestBlockChainForV2Engine(t, 905, params.TestXDPoSMockChainConfig, nil)
 	engineV2 := blockchain.Engine().(*XDPoS.XDPoS).EngineV2
 
@@ -92,6 +97,8 @@ func TestProcessQcShallSetForensicsCommittedQc(t *testing.T) {
 }
 
 func TestSetCommittedQCsInOrder(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	blockchain, _, currentBlock, _, _, _ := PrepareXDCTestBlockChainForV2Engine(t, 905, params.TestXDPoSMockChainConfig, nil)
 	forensics := blockchain.Engine().(*XDPoS.XDPoS).EngineV2.GetForensicsFaker()
 
@@ -118,6 +125,8 @@ func TestSetCommittedQCsInOrder(t *testing.T) {
 
 // Happty path
 func TestForensicsMonitoring(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	blockchain, _, currentBlock, _, _, _ := PrepareXDCTestBlockChainForV2Engine(t, 915, params.TestXDPoSMockChainConfig, nil)
 	forensics := blockchain.Engine().(*XDPoS.XDPoS).EngineV2.GetForensicsFaker()
 	var decodedCurrentblockExtraField types.ExtraFields_v2
@@ -140,6 +149,7 @@ func TestForensicsMonitoring(t *testing.T) {
 }
 
 func TestForensicsMonitoringNotOnSameChainButHaveSameRoundQC(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
 	var numOfForks = new(int)
 	*numOfForks = 10
 	var forkRoundDifference = new(int)
@@ -193,12 +203,14 @@ func TestForensicsMonitoringNotOnSameChainButHaveSameRoundQC(t *testing.T) {
 			assert.Equal(t, 5, len(content.LargerRoundInfo.SignerAddresses))
 			return
 		case <-time.After(5 * time.Second):
-			t.FailNow()
+			t.Fatal(errTimeoutAfter5Seconds)
 		}
 	}
 }
 
 func TestForensicsMonitoringNotOnSameChainDoNotHaveSameRoundQC(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	var numOfForks = new(int)
 	*numOfForks = 10
 	var forkRoundDifference = new(int)
@@ -253,13 +265,15 @@ func TestForensicsMonitoringNotOnSameChainDoNotHaveSameRoundQC(t *testing.T) {
 			assert.Equal(t, 2, len(content.LargerRoundInfo.SignerAddresses))
 			return
 		case <-time.After(5 * time.Second):
-			t.FailNow()
+			t.Fatal(errTimeoutAfter5Seconds)
 		}
 	}
 }
 
 // "prone to attack" test where the "across epoch" field is true
 func TestForensicsAcrossEpoch(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	var numOfForks = new(int)
 	*numOfForks = 10
 	var forkRoundDifference = new(int)
@@ -316,12 +330,14 @@ func TestForensicsAcrossEpoch(t *testing.T) {
 			assert.Equal(t, 2, len(content.LargerRoundInfo.SignerAddresses))
 			return
 		case <-time.After(5 * time.Second):
-			t.FailNow()
+			t.Fatal(errTimeoutAfter5Seconds)
 		}
 	}
 }
 
 func TestVoteEquivocationSameRound(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	var numOfForks = new(int)
 	*numOfForks = 1
 	blockchain, _, currentBlock, signer, signFn, currentForkBlock := PrepareXDCTestBlockChainForV2Engine(t, 901, params.TestXDPoSMockChainConfig, &ForkedBlockOptions{numOfForkedBlocks: numOfForks})
@@ -382,12 +398,14 @@ func TestVoteEquivocationSameRound(t *testing.T) {
 			assert.Equal(t, types.Round(5), content.LargerRoundVote.ProposedBlockInfo.Round)
 			return
 		case <-time.After(5 * time.Second):
-			t.FailNow()
+			t.Fatal(errTimeoutAfter5Seconds)
 		}
 	}
 }
 
 func TestVoteEquivocationDifferentRound(t *testing.T) {
+	t.Skip("Skipping this test for now as we disable forensics")
+
 	var numOfForks = new(int)
 	*numOfForks = 10
 	var forkRoundDifference = new(int)
@@ -437,7 +455,7 @@ func TestVoteEquivocationDifferentRound(t *testing.T) {
 			assert.Equal(t, acc1Addr, content.Signer)
 			return
 		case <-time.After(5 * time.Second):
-			t.FailNow()
+			t.Fatal(errTimeoutAfter5Seconds)
 		}
 	}
 }
